@@ -14,3 +14,25 @@ export const buildMapCountries = (
     };
   });
 };
+
+const DURATION = 50;
+
+const throttle = (function () {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  return function throttle(callback: () => void) {
+    if (!timeout) {
+      callback();
+      timeout = setTimeout(() => {
+        timeout = null;
+      }, DURATION);
+    }
+  };
+})();
+
+export const throttlify = (callback: (event: Event) => void) => {
+  return function throttlified(event: Event) {
+    throttle(() => {
+      callback(event);
+    });
+  };
+};
