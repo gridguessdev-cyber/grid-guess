@@ -3,7 +3,7 @@ import { CountriesCollection, MapCountry } from "@/types/maps";
 export const buildMapCountries = (
   collection: CountriesCollection
 ): MapCountry[] => {
-  return collection.features.map((feature) => {
+  const countries = collection.features.map((feature) => {
     return {
       name: feature.properties.name,
       id: feature.properties.id,
@@ -13,6 +13,18 @@ export const buildMapCountries = (
           : (feature.geometry.coordinates as [number, number][][][]),
     };
   });
+
+  return countries.map((country) => ({
+    name: country.name,
+    id: country.id,
+    coordinates: country.coordinates.map((arr) => {
+      return arr.map((pairs) => {
+        return pairs.map((pair) => {
+          return [pair[0] + 180, -(pair[1] - 90)];
+        });
+      });
+    }),
+  }));
 };
 
 const DURATION = 50;
@@ -34,5 +46,76 @@ export const throttlify = (callback: (event: Event) => void) => {
     throttle(() => {
       callback(event);
     });
+  };
+};
+
+export const calculatePolygonArea = (polygon: [number, number][][]): number => {
+  let area = 0;
+  const points = polygon[0]; // Assuming the first array contains the points of the polygon
+
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    const p1 = points[i];
+    const p2 = points[j];
+    area += (p2[0] + p1[0]) * (p2[1] - p1[1]);
+  }
+
+  return Math.abs(area / 2);
+};
+
+type calculateCountryCellAreaParams = {
+  squareSize: number;
+  verticalShift: number;
+  horizontalShift: number;
+  clickCoordinates: [number, number];
+};
+
+export const getClickedSquareSides = ({
+  squareSize,
+  verticalShift,
+  horizontalShift,
+  clickCoordinates,
+}: calculateCountryCellAreaParams) => {
+  const [x, y] = clickCoordinates;
+  let squareTopCoordinates,
+    squareBottomCoordinates,
+    squareLeftCoordinates,
+    squareRightCoordinates;
+  let squareTop = Math.floor((squareSize - verticalShift + y) / squareSize) - 1;
+  let squareBottom =
+    Math.ceil((squareSize - Math.abs(verticalShift) + y) / squareSize) - 1;
+  let squareLeft =
+    Math.floor((squareSize - horizontalShift + x) / squareSize) - 1;
+  let squareRight =
+    Math.ceil((squareSize - Math.abs(horizontalShift) + x) / squareSize) - 1;
+
+  squareTopCoordinates = squareTop * squareSize + verticalShift;
+  squareBottomCoordinates = squareBottom * squareSize + verticalShift;
+  if (verticalShift > 0) {
+    squareTop++;
+    squareBottom++;
+  }
+
+  if (verticalShift !== 0 && squareTop === 0) {
+    squareTopCoordinates = 0;
+    squareBottomCoordinates = Math.abs(verticalShift);
+  }
+
+  squareLeftCoordinates = squareLeft * squareSize + horizontalShift;
+  squareRightCoordinates = squareRight * squareSize + horizontalShift;
+  if (horizontalShift > 0) {
+    squareLeft++;
+    squareRight++;
+  }
+
+  if (horizontalShift !== 0 && squareLeft === 0) {
+    squareLeftCoordinates = 0;
+    squareRightCoordinates = Math.abs(horizontalShift);
+  }
+
+  return {
+    squareTopCoordinates,
+    squareBottomCoordinates,
+    squareLeftCoordinates,
+    squareRightCoordinates,
   };
 };

@@ -9,8 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/lodash": "^4.17.20",
     "d3": "^7.9.0",
+    "lodash": "^4.17.21",
     "next": "15.3.5",
+    "polygon-intersection": "^2.0.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

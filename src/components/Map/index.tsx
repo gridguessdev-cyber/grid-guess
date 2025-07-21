@@ -1,16 +1,34 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3";
-import { MapCountry } from "@/types/maps";
-import { throttlify } from "@/utils";
+import { MapCountry, Polygon } from "@/types/maps";
+import {
+  calculatePolygonArea,
+  getClickedSquareSides,
+  throttlify,
+} from "@/utils";
+import {
+  checkIfPolygonsIntersect,
+  findIntersectionBetweenPolygons,
+} from "polygon-intersection";
+import CountryPicker from "../CountryPicker";
+import { debounce } from "lodash";
+
+const defaultSquareSize = 20;
 
 type RectSelection = d3.Selection<SVGRectElement, unknown, null, undefined>;
 type SVGSelection = d3.Selection<SVGSVGElement, unknown, null, undefined>;
+
+type getOverlapParams = {
+  squareTopCoordinates: number;
+  squareLeftCoordinates: number;
+};
 
 type drawGridParams = {
   squareSize: number;
   horizontalShift?: number;
   verticalShift?: number;
+  solutionSquare?: [number, number];
 };
 
 interface Props {
@@ -21,9 +39,20 @@ export default function Map({ countries }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<SVGSelection>(null);
 
-  const [squareSize, setSquareSize] = useState(15);
+  const firstRender = useRef(true);
+
+  const countriesNames = useMemo(
+    () => countries.map((country) => country.name).sort(),
+    [countries]
+  );
+
+  const [selectedCountry, setSelectedCountry] = useState(countriesNames[0]);
+  console.log("selectedCountry", selectedCountry);
+
+  const [squareSize, setSquareSize] = useState(defaultSquareSize);
   const horizontalShift = useRef(0);
   const verticalShift = useRef(0);
+  const solutionSquare = useRef<Polygon>([NaN, NaN]);
 
   const drawMap = () => {
     if (!mapRef.current) return;
@@ -33,8 +62,8 @@ export default function Map({ countries }: Props) {
         return polygon.map((points) => {
           return points.map((point) => {
             return {
-              x: point[0] + 180,
-              y: -(point[1] - 90),
+              x: point[0],
+              y: point[1],
             };
           });
         });
@@ -66,7 +95,7 @@ export default function Map({ countries }: Props) {
           .append("path")
           .attr("d", lineFunc(polygon[0].map((point) => [point.x, point.y])))
           .attr("stroke", "black")
-          .attr("stroke-width", 0.4)
+          .attr("stroke-width", 0.2)
           .attr("fill", "none");
       }
     }
@@ -78,14 +107,16 @@ export default function Map({ countries }: Props) {
     verticalShift = 0,
   }: drawGridParams) => {
     if (!mapRef.current) return;
+    removeGrid();
+
     const svg = d3
       .select(mapRef.current)
       .append("svg")
       .attr("preserveAspectRatio", "xMinYMin meet")
       .attr("viewBox", "0 0 360 180")
       .classed("svg-content-responsive", true)
-      .style("width", "95%")
-      .style("left", "2.5%");
+      .style("width", "80%")
+      .style("left", "10%");
 
     gridRef.current = svg;
     const rectangles: RectSelection[][] = [];
@@ -101,15 +132,30 @@ export default function Map({ countries }: Props) {
           .attr("height", squareSize)
           .attr("stroke", "black")
           .attr("stroke-width", 0.1)
-          .attr("fill", "none");
+          .attr(
+            "fill",
+            x === solutionSquare.current?.[0] &&
+              y === solutionSquare.current?.[1]
+              ? "#62a674"
+              : "none"
+          )
+          .attr("fill-opacity", "0.2");
         row.push(rect);
       }
 
       rectangles.push(row);
     }
 
+    console.log("here");
     svg.on("click", (event) => {
-      console.log("SVG clicked", d3.pointer(event));
+      const clickedSquareSides = getClickedSquareSides({
+        squareSize,
+        verticalShift,
+        horizontalShift,
+        clickCoordinates: d3.pointer(event),
+      });
+
+      getOverlap(clickedSquareSides);
     });
 
     const throttledMouseMove = throttlify((event) => {
@@ -121,10 +167,22 @@ export default function Map({ countries }: Props) {
         (y - verticalShift + squareSize * 3) / squareSize
       );
 
+      const solutionSquareGridX =
+        (solutionSquare.current?.[0] - horizontalShift + squareSize * 3) /
+        squareSize;
+      const solutionSquareGridY =
+        (solutionSquare.current?.[1] - verticalShift + squareSize * 3) /
+        squareSize;
+
       rectangles.forEach((row, rowIndex) => {
         row.forEach((rect, colIndex) => {
           if (rowIndex === gridX && colIndex === gridY) {
             rect.attr("fill", "#00080050");
+          } else if (
+            rowIndex === solutionSquareGridX &&
+            colIndex === solutionSquareGridY
+          ) {
+            rect.attr("fill", "#62a674");
           } else {
             rect.attr("fill", "none");
           }
@@ -145,7 +203,6 @@ export default function Map({ countries }: Props) {
   const handleGridResize = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = parseInt(event.target.value, 10);
     if (gridRef.current) {
-      removeGrid();
       setSquareSize(newSize);
       horizontalShift.current = 0;
       verticalShift.current = 0;
@@ -156,10 +213,10 @@ export default function Map({ countries }: Props) {
   const handleGridHorizontalShift = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const newShift = parseInt(event.target.value, 10);
+    const newShift = parseInt(event.target.value);
     if (gridRef.current) {
-      removeGrid();
       horizontalShift.current = newShift;
+      findSquareWithMostCountryArea();
       drawGrid({
         squareSize,
         horizontalShift: horizontalShift.current,
@@ -171,10 +228,10 @@ export default function Map({ countries }: Props) {
   const handleGridVerticalShift = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const newShift = parseInt(event.target.value, 10);
+    const newShift = parseInt(event.target.value);
     if (gridRef.current) {
-      removeGrid();
       verticalShift.current = newShift;
+      findSquareWithMostCountryArea();
       drawGrid({
         squareSize,
         horizontalShift: horizontalShift.current,
@@ -183,15 +240,125 @@ export default function Map({ countries }: Props) {
     }
   };
 
+  const getOverlap = ({
+    squareTopCoordinates,
+    squareLeftCoordinates,
+  }: getOverlapParams) => {
+    const selectedCountryCoordinated = countries.filter(
+      (country) => country.name === selectedCountry
+    );
+
+    const square: [number, number][] = [
+      [squareLeftCoordinates, squareTopCoordinates],
+      [squareLeftCoordinates + squareSize, squareTopCoordinates],
+      [squareLeftCoordinates + squareSize, squareTopCoordinates + squareSize],
+      [squareLeftCoordinates, squareTopCoordinates + squareSize],
+    ];
+
+    const result = findIntersectionBetweenPolygons(
+      selectedCountryCoordinated[0].coordinates[0][0],
+      square
+    );
+
+    if (!result[0]) return;
+
+    const area = calculatePolygonArea(result);
+
+    console.log("area", area);
+  };
+
+  const findSquareWithMostCountryArea = debounce(async () => {
+    const selectedCountryCoordinated = countries.filter(
+      (country) => country.name === selectedCountry
+    );
+
+    const intersectedSquares = [];
+
+    let squareWithMostCountryArea: [number, number][] = [];
+    let biggestArea = 0;
+    for (
+      let x = horizontalShift.current - squareSize * 3;
+      x < 360;
+      x += squareSize
+    ) {
+      for (
+        let y = verticalShift.current - squareSize * 3;
+        y < 180;
+        y += squareSize
+      ) {
+        const square: [number, number][] = [
+          [x, y],
+          [x + squareSize, y],
+          [x + squareSize, y + squareSize],
+          [x, y + squareSize],
+        ];
+
+        const result = checkIfPolygonsIntersect(
+          selectedCountryCoordinated[0].coordinates[0][0],
+          square
+        );
+
+        if (result) {
+          intersectedSquares.push(square);
+        }
+      }
+    }
+
+    intersectedSquares.forEach((square) => {
+      const result = findIntersectionBetweenPolygons(
+        square,
+        selectedCountryCoordinated[0].coordinates[0][0]
+      );
+
+      const area = calculatePolygonArea(result);
+
+      if (area > biggestArea) {
+        squareWithMostCountryArea = square;
+        biggestArea = area;
+      }
+    });
+
+    solutionSquare.current = squareWithMostCountryArea[0];
+    drawGrid({
+      squareSize,
+      horizontalShift: horizontalShift.current,
+      verticalShift: verticalShift.current,
+    });
+
+    return squareWithMostCountryArea;
+  }, 600);
+
+  useEffect(() => {
+    return () => {
+      gridRef.current?.on("click", null).on("mousemove", null);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!firstRender.current) {
+      findSquareWithMostCountryArea();
+      drawGrid({
+        squareSize,
+        horizontalShift: horizontalShift.current,
+        verticalShift: verticalShift.current,
+      });
+    }
+    firstRender.current = false;
+  }, [selectedCountry, squareSize]);
+
   return (
     <div>
       <div className="flex flex-col items-center mb-4">
+        <CountryPicker
+          countriesList={countriesNames}
+          setSelectedCountry={setSelectedCountry}
+        />
         <div className="flex gap-3 mb-4">
           <button onClick={drawMap}>Draw Map</button>
           <button
             onClick={() =>
               drawGrid({
-                squareSize: 15,
+                squareSize: defaultSquareSize,
               })
             }
           >
@@ -215,10 +382,7 @@ export default function Map({ countries }: Props) {
           />
         </div>
       </div>
-      <div
-        ref={mapRef}
-        className="w-full h-full flex items-center justify-center"
-      />
+      <div ref={mapRef} className="w-full h-full" />
     </div>
   );
 }

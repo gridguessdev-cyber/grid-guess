@@ -1,16 +1,16 @@
 import Map from "@/components/Map";
 
-import { world } from "@/data/world";
+import { world } from "@/data/world-medium-resolution";
 import { buildMapCountries } from "@/utils";
 import { useMemo } from "react";
 
 export default function Home() {
-  const data = useMemo(() => buildMapCountries(world), []);
+  const mapData = useMemo(() => buildMapCountries(world), []);
 
   return (
     <div>
       <main>Countries Grid</main>
-      <Map countries={data} />
+      <Map countries={mapData} />
     </div>
   );
 }

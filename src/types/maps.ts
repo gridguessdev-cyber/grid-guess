@@ -17,3 +17,5 @@ export type MapCountry = {
   id: string;
   coordinates: [number, number][][][];
 };
+
+export type Polygon = [number, number];
