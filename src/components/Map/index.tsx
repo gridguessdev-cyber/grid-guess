@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3";
-import { MapCountry, Polygon } from "@/types/maps";
+import { MapCountry, Point, Polygon } from "@/types/maps";
 import {
   calculatePolygonArea,
   getClickedSquareSides,
@@ -32,32 +32,35 @@ type drawGridParams = {
 };
 
 interface Props {
-  countries: MapCountry[];
+  countriesToDisplay: MapCountry[];
+  countriesForCalculations: MapCountry[];
 }
 
-export default function Map({ countries }: Props) {
+export default function Map({
+  countriesToDisplay,
+  countriesForCalculations,
+}: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<SVGSelection>(null);
 
   const firstRender = useRef(true);
 
   const countriesNames = useMemo(
-    () => countries.map((country) => country.name).sort(),
-    [countries]
+    () => countriesForCalculations.map((country) => country.name).sort(),
+    [countriesForCalculations]
   );
 
   const [selectedCountry, setSelectedCountry] = useState(countriesNames[0]);
-  console.log("selectedCountry", selectedCountry);
 
   const [squareSize, setSquareSize] = useState(defaultSquareSize);
   const horizontalShift = useRef(0);
   const verticalShift = useRef(0);
-  const solutionSquare = useRef<Polygon>([NaN, NaN]);
+  const solutionSquare = useRef<Point>([NaN, NaN]);
 
   const drawMap = () => {
     if (!mapRef.current) return;
 
-    const countriesCoordinates = countries.map((feature) => {
+    const countriesCoordinates = countriesToDisplay.map((feature) => {
       return feature.coordinates.map((polygon) => {
         return polygon.map((points) => {
           return points.map((point) => {
@@ -244,37 +247,54 @@ export default function Map({ countries }: Props) {
     squareTopCoordinates,
     squareLeftCoordinates,
   }: getOverlapParams) => {
-    const selectedCountryCoordinated = countries.filter(
+    const selectedCountryCoordinates = countriesForCalculations.filter(
       (country) => country.name === selectedCountry
     );
 
-    const square: [number, number][] = [
+    const square: Polygon = [
       [squareLeftCoordinates, squareTopCoordinates],
       [squareLeftCoordinates + squareSize, squareTopCoordinates],
       [squareLeftCoordinates + squareSize, squareTopCoordinates + squareSize],
       [squareLeftCoordinates, squareTopCoordinates + squareSize],
     ];
 
-    const result = findIntersectionBetweenPolygons(
-      selectedCountryCoordinated[0].coordinates[0][0],
-      square
-    );
+    let intersections: Polygon[][] = [];
 
-    if (!result[0]) return;
+    selectedCountryCoordinates[0].coordinates.forEach((segment) => {
+      const intersection = findIntersectionBetweenPolygons(square, segment[0]);
+      if (intersection.length > 1) {
+        intersections.push(...intersection.map((item) => [item]));
+      } else {
+        intersections.push(intersection);
+      }
+    });
 
-    const area = calculatePolygonArea(result);
+    intersections = intersections.filter((segment) => segment[0]);
 
-    console.log("area", area);
+    if (!intersections[0]) return;
+
+    const total = intersections.reduce((acc, segment) => {
+      if (segment.length === 1) {
+        console.log(segment);
+        return (acc += calculatePolygonArea(segment));
+      }
+
+      return segment.reduce((acc, segment) => {
+        return (acc += calculatePolygonArea([segment]));
+      }, 0);
+    }, 0);
+
+    console.log("area", total);
   };
 
   const findSquareWithMostCountryArea = debounce(async () => {
-    const selectedCountryCoordinated = countries.filter(
+    const selectedCountryCoordinates = countriesForCalculations.filter(
       (country) => country.name === selectedCountry
     );
 
     const intersectedSquares = [];
 
-    let squareWithMostCountryArea: [number, number][] = [];
+    let squareWithMostCountryArea: Polygon = [];
     let biggestArea = 0;
     for (
       let x = horizontalShift.current - squareSize * 3;
@@ -286,35 +306,59 @@ export default function Map({ countries }: Props) {
         y < 180;
         y += squareSize
       ) {
-        const square: [number, number][] = [
+        const square: Polygon = [
           [x, y],
           [x + squareSize, y],
           [x + squareSize, y + squareSize],
           [x, y + squareSize],
         ];
 
-        const result = checkIfPolygonsIntersect(
-          selectedCountryCoordinated[0].coordinates[0][0],
-          square
-        );
+        const squaresToCheck: Polygon[] = [];
 
-        if (result) {
-          intersectedSquares.push(square);
-        }
+        selectedCountryCoordinates[0].coordinates.forEach((segment) => {
+          if (checkIfPolygonsIntersect(square, segment[0])) {
+            squaresToCheck.push(square);
+          }
+        });
+
+        intersectedSquares.push(...squaresToCheck);
       }
     }
 
-    intersectedSquares.forEach((square) => {
-      const result = findIntersectionBetweenPolygons(
-        square,
-        selectedCountryCoordinated[0].coordinates[0][0]
-      );
+    const unique = Array.from(
+      new Set(intersectedSquares.map((arr) => JSON.stringify(arr)))
+    ).map((str) => JSON.parse(str));
 
-      const area = calculatePolygonArea(result);
+    unique.forEach((square) => {
+      let intersections: Polygon[][] = [];
 
-      if (area > biggestArea) {
+      selectedCountryCoordinates[0].coordinates.forEach((segment) => {
+        const intersection = findIntersectionBetweenPolygons(
+          square,
+          segment[0]
+        );
+        if (intersection.length > 1) {
+          intersections.push(...intersection.map((item) => [item]));
+        } else {
+          intersections.push(intersection);
+        }
+      });
+
+      intersections = intersections.filter((item) => item[0]);
+
+      const totalArea = intersections.reduce((acc, segment) => {
+        if (segment.length === 1) {
+          return (acc += calculatePolygonArea(segment));
+        }
+
+        return segment.reduce((acc, segment) => {
+          return (acc += calculatePolygonArea([segment]));
+        }, 0);
+      }, 0);
+
+      if (totalArea > biggestArea) {
         squareWithMostCountryArea = square;
-        biggestArea = area;
+        biggestArea = totalArea;
       }
     });
 
