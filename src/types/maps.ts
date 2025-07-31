@@ -13,7 +13,6 @@ export type CountriesCollection = {
 
 export type MapCountry = {
   name: string;
-  id: string;
   coordinates: [number, number][][][];
 };
 

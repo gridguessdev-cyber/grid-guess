@@ -84,22 +84,24 @@ export default function Map({
 
     for (let i = 0; i < countriesCoordinates.length; i++) {
       for (let j = 0; j < countriesCoordinates[i].length; j++) {
-        const polygon = countriesCoordinates[i][j];
-        const lineFunc = d3
-          .line()
-          .x(function (d) {
-            return d[0];
-          })
-          .y(function (d) {
-            return d[1];
-          });
+        for (let k = 0; k < countriesCoordinates[i][j].length; k++) {
+          const polygon = countriesCoordinates[i][j][k];
+          const lineFunc = d3
+            .line()
+            .x(function (d) {
+              return d[0];
+            })
+            .y(function (d) {
+              return d[1];
+            });
 
-        svg
-          .append("path")
-          .attr("d", lineFunc(polygon[0].map((point) => [point.x, point.y])))
-          .attr("stroke", "black")
-          .attr("stroke-width", 0.2)
-          .attr("fill", "none");
+          svg
+            .append("path")
+            .attr("d", lineFunc(polygon.map((point) => [point.x, point.y])))
+            .attr("stroke", "black")
+            .attr("stroke-width", 0.2)
+            .attr("fill", "none");
+        }
       }
     }
   };
@@ -207,6 +209,7 @@ export default function Map({
     const newSize = parseInt(event.target.value, 10);
     if (gridRef.current) {
       setSquareSize(newSize);
+      findSquareWithMostCountryArea();
       horizontalShift.current = 0;
       verticalShift.current = 0;
       drawGrid({ squareSize: newSize });
