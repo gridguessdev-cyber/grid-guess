@@ -5,6 +5,7 @@ import { MapCountry, Point, Polygon } from "@/types/maps";
 import {
   calculatePolygonArea,
   getClickedSquareSides,
+  getEdgePointsCoordinates,
   throttlify,
 } from "@/utils";
 import {
@@ -14,7 +15,7 @@ import {
 import CountryPicker from "../CountryPicker";
 import { debounce } from "lodash";
 
-const defaultSquareSize = 20;
+const defaultSquareSize = 10;
 
 type RectSelection = d3.Selection<SVGRectElement, unknown, null, undefined>;
 type SVGSelection = d3.Selection<SVGSVGElement, unknown, null, undefined>;
@@ -45,6 +46,11 @@ export default function Map({
 
   const firstRender = useRef(true);
 
+  const edgeCoordinates = useMemo(
+    () => getEdgePointsCoordinates(countriesToDisplay),
+    []
+  );
+
   const countriesNames = useMemo(
     () => countriesForCalculations.map((country) => country.name).sort(),
     [countriesForCalculations]
@@ -73,14 +79,18 @@ export default function Map({
       });
     });
 
+    const viewBoxSize = [
+      edgeCoordinates.largestX - edgeCoordinates.smallestX,
+      edgeCoordinates.largestY - edgeCoordinates.smallestY,
+    ];
+
     const svg = d3
       .select(mapRef.current)
-      .append("div")
-      .classed("svg-container", true)
       .append("svg")
-      .attr("preserveAspectRatio", "xMinYMin meet")
-      .attr("viewBox", "0 0 360 180")
-      .classed("svg-content-responsive", true);
+      .classed("svg-content-responsive", true)
+      .attr("width", "100%")
+      .attr("height", "70vh")
+      .attr("viewBox", `0 0 ${viewBoxSize[0]} ${viewBoxSize[1]}`);
 
     for (let i = 0; i < countriesCoordinates.length; i++) {
       for (let j = 0; j < countriesCoordinates[i].length; j++) {
@@ -114,14 +124,18 @@ export default function Map({
     if (!mapRef.current) return;
     removeGrid();
 
+    const viewBoxSize = [
+      edgeCoordinates.largestX - edgeCoordinates.smallestX,
+      edgeCoordinates.largestY - edgeCoordinates.smallestY,
+    ];
+
     const svg = d3
       .select(mapRef.current)
       .append("svg")
-      .attr("preserveAspectRatio", "xMinYMin meet")
-      .attr("viewBox", "0 0 360 180")
       .classed("svg-content-responsive", true)
-      .style("width", "80%")
-      .style("left", "10%");
+      .attr("width", "100%")
+      .attr("height", "70vh")
+      .attr("viewBox", `0 0 ${viewBoxSize[0]} ${viewBoxSize[1]}`);
 
     gridRef.current = svg;
     const rectangles: RectSelection[][] = [];
@@ -151,7 +165,6 @@ export default function Map({
       rectangles.push(row);
     }
 
-    console.log("here");
     svg.on("click", (event) => {
       const clickedSquareSides = getClickedSquareSides({
         squareSize,
@@ -293,7 +306,7 @@ export default function Map({
   const findSquareWithMostCountryArea = debounce(async () => {
     const selectedCountryCoordinates = countriesForCalculations.filter(
       (country) => country.name === selectedCountry
-    );
+    )[0];
 
     const intersectedSquares = [];
 
@@ -318,7 +331,7 @@ export default function Map({
 
         const squaresToCheck: Polygon[] = [];
 
-        selectedCountryCoordinates[0].coordinates.forEach((segment) => {
+        selectedCountryCoordinates.coordinates.forEach((segment) => {
           if (checkIfPolygonsIntersect(square, segment[0])) {
             squaresToCheck.push(square);
           }
@@ -335,7 +348,7 @@ export default function Map({
     unique.forEach((square) => {
       let intersections: Polygon[][] = [];
 
-      selectedCountryCoordinates[0].coordinates.forEach((segment) => {
+      selectedCountryCoordinates.coordinates.forEach((segment) => {
         const intersection = findIntersectionBetweenPolygons(
           square,
           segment[0]
@@ -376,6 +389,10 @@ export default function Map({
   }, 600);
 
   useEffect(() => {
+    drawMap();
+    drawGrid({
+      squareSize: defaultSquareSize,
+    });
     return () => {
       gridRef.current?.on("click", null).on("mousemove", null);
     };
@@ -413,23 +430,30 @@ export default function Map({
           </button>
           <button onClick={removeGrid}>Remove Grid</button>
         </div>
-        <div>
-          <input type="range" min={10} max={30} onChange={handleGridResize} />
+        <div className="flex flex-col gap-5 w-[80%]">
+          <input type="range" min={5} max={15} onChange={handleGridResize} />
           <input
             type="range"
             min={-squareSize}
             max={squareSize}
             onChange={handleGridHorizontalShift}
           />
+        </div>
+      </div>
+      <div>
+        <div ref={mapRef} />
+      </div>
+      <div className="h-[70vh] w-20 flex justify-center items-center">
+        <div className="rotate-90">
           <input
             type="range"
             min={-squareSize}
             max={squareSize}
             onChange={handleGridVerticalShift}
+            className="w-[70vh]"
           />
         </div>
       </div>
-      <div ref={mapRef} className="w-full h-full" />
     </div>
   );
 }

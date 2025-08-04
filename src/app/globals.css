@@ -28,16 +28,13 @@ body {
 .svg-container {
   display: inline-block;
   position: relative;
-  width: 80%;
-  padding-bottom: 50%;
   vertical-align: top;
   overflow: hidden;
   border: 1px solid #ccc;
-  left: 10%;
 }
 
 .svg-content-responsive {
-  display: inline-block;
   position: absolute;
-  left: 0;
+  width: 80%;
+  left: 10%;
 }

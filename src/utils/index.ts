@@ -14,13 +14,30 @@ export const buildMapCountries = (
     };
   });
 
+  const edgeCoordinates = getEdgePointsCoordinates(
+    countries.map((country) => ({
+      name: country.name,
+      id: country.id,
+      coordinates: country.coordinates.map((arr) => {
+        return arr.map((pairs) => {
+          return pairs.map((pair) => {
+            return [pair[0] + 180, -(pair[1] - 90)];
+          });
+        });
+      }),
+    }))
+  );
+
   return countries.map((country) => ({
     name: country.name,
     id: country.id,
     coordinates: country.coordinates.map((arr) => {
       return arr.map((pairs) => {
         return pairs.map((pair) => {
-          return [pair[0] + 180, -(pair[1] - 90)];
+          return [
+            pair[0] + 180 - edgeCoordinates.smallestX,
+            -(pair[1] - 90) - edgeCoordinates.smallestY,
+          ];
         });
       });
     }),
@@ -118,4 +135,36 @@ export const getClickedSquareSides = ({
     squareLeftCoordinates,
     squareRightCoordinates,
   };
+};
+
+export const getEdgePointsCoordinates = (map: MapCountry[]) => {
+  const firstPoint = map[0].coordinates[0][0][0];
+  const result = {
+    smallestX: firstPoint[0],
+    largestX: firstPoint[0],
+    smallestY: firstPoint[1],
+    largestY: firstPoint[1],
+  };
+
+  map.forEach((country) => {
+    country.coordinates.flat(2).forEach((pair) => {
+      if (result.largestX < pair[0]) {
+        result.largestX = pair[0];
+      }
+
+      if (result.largestY < pair[1]) {
+        result.largestY = pair[1];
+      }
+
+      if (result.smallestX > pair[0]) {
+        result.smallestX = pair[0];
+      }
+
+      if (result.smallestY > pair[1]) {
+        result.smallestY = pair[1];
+      }
+    });
+  });
+
+  return result;
 };
