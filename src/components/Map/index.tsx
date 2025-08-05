@@ -12,10 +12,11 @@ import {
   checkIfPolygonsIntersect,
   findIntersectionBetweenPolygons,
 } from "polygon-intersection";
-import CountryPicker from "../CountryPicker";
+import MapPicker from "../MapPicker";
 import { debounce } from "lodash";
 
 const defaultSquareSize = 10;
+const additionalSquaresAmount = 10;
 
 type RectSelection = d3.Selection<SVGRectElement, unknown, null, undefined>;
 type SVGSelection = d3.Selection<SVGSVGElement, unknown, null, undefined>;
@@ -140,9 +141,17 @@ export default function Map({
     gridRef.current = svg;
     const rectangles: RectSelection[][] = [];
 
-    for (let x = horizontalShift - squareSize * 3; x < 360; x += squareSize) {
+    for (
+      let x = horizontalShift - squareSize * additionalSquaresAmount;
+      x < 360;
+      x += squareSize
+    ) {
       const row: RectSelection[] = [];
-      for (let y = verticalShift - squareSize * 3; y < 180; y += squareSize) {
+      for (
+        let y = verticalShift - squareSize * additionalSquaresAmount;
+        y < 180;
+        y += squareSize
+      ) {
         const rect = svg
           .append("rect")
           .attr("x", x)
@@ -179,17 +188,22 @@ export default function Map({
     const throttledMouseMove = throttlify((event) => {
       const [x, y] = d3.pointer(event);
       const gridX = Math.floor(
-        (x - horizontalShift + squareSize * 3) / squareSize
+        (x - horizontalShift + squareSize * additionalSquaresAmount) /
+          squareSize
       );
       const gridY = Math.floor(
-        (y - verticalShift + squareSize * 3) / squareSize
+        (y - verticalShift + squareSize * additionalSquaresAmount) / squareSize
       );
 
       const solutionSquareGridX =
-        (solutionSquare.current?.[0] - horizontalShift + squareSize * 3) /
+        (solutionSquare.current?.[0] -
+          horizontalShift +
+          squareSize * additionalSquaresAmount) /
         squareSize;
       const solutionSquareGridY =
-        (solutionSquare.current?.[1] - verticalShift + squareSize * 3) /
+        (solutionSquare.current?.[1] -
+          verticalShift +
+          squareSize * additionalSquaresAmount) /
         squareSize;
 
       rectangles.forEach((row, rowIndex) => {
@@ -313,12 +327,12 @@ export default function Map({
     let squareWithMostCountryArea: Polygon = [];
     let biggestArea = 0;
     for (
-      let x = horizontalShift.current - squareSize * 3;
+      let x = horizontalShift.current - squareSize * additionalSquaresAmount;
       x < 360;
       x += squareSize
     ) {
       for (
-        let y = verticalShift.current - squareSize * 3;
+        let y = verticalShift.current - squareSize * additionalSquaresAmount;
         y < 180;
         y += squareSize
       ) {
@@ -413,24 +427,11 @@ export default function Map({
   return (
     <div>
       <div className="flex flex-col items-center mb-4">
-        <CountryPicker
-          countriesList={countriesNames}
-          setSelectedCountry={setSelectedCountry}
-        />
-        <div className="flex gap-3 mb-4">
-          <button onClick={drawMap}>Draw Map</button>
-          <button
-            onClick={() =>
-              drawGrid({
-                squareSize: defaultSquareSize,
-              })
-            }
-          >
-            Draw Grid
-          </button>
-          <button onClick={removeGrid}>Remove Grid</button>
-        </div>
         <div className="flex flex-col gap-5 w-[80%]">
+          <MapPicker
+            countriesList={countriesNames}
+            setSelectedCountry={setSelectedCountry}
+          />
           <input type="range" min={5} max={15} onChange={handleGridResize} />
           <input
             type="range"
