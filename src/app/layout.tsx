@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import ReactQueryProvider from "./providers";
 import { MapStoreProvider } from "@/providers/MapStoreProvider";
 
 const geistSans = Geist({
@@ -28,7 +29,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <MapStoreProvider>{children}</MapStoreProvider>
+        <MapStoreProvider>
+          <p className="alfa-slab-one-regular text-center my-5 text-3xl">
+            Countries Grid
+          </p>
+          <ReactQueryProvider>{children}</ReactQueryProvider>
+        </MapStoreProvider>
       </body>
     </html>
   );

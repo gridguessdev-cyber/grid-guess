@@ -1,4 +1,6 @@
-{
+import { CountriesCollection } from "@/types/maps";
+
+export const northAmericaMedium: CountriesCollection ={
   "type": "FeatureCollection",
   "features": [
     {

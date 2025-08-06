@@ -2,7 +2,7 @@
 import fs from "fs";
 import { buildMapCountries } from "@/utils";
 // import { world } from "../src/data/world-medium-resolution";
-import world from "../src/data/asia/asia-medium.json";
+import world from "../src/data/asia/asia-medium";
 
 const map = buildMapCountries(world);
 

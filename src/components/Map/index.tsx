@@ -34,11 +34,13 @@ type drawGridParams = {
 };
 
 interface Props {
+  mode: "guess" | "build";
   countriesToDisplay: MapCountry[];
   countriesForCalculations: MapCountry[];
 }
 
 export default function Map({
+  mode,
   countriesToDisplay,
   countriesForCalculations,
 }: Props) {
@@ -426,35 +428,39 @@ export default function Map({
 
   return (
     <div>
-      <div className="flex flex-col items-center mb-4">
-        <div className="flex flex-col gap-5 w-[80%]">
-          <MapPicker
-            countriesList={countriesNames}
-            setSelectedCountry={setSelectedCountry}
-          />
-          <input type="range" min={5} max={15} onChange={handleGridResize} />
-          <input
-            type="range"
-            min={-squareSize}
-            max={squareSize}
-            onChange={handleGridHorizontalShift}
-          />
+      {mode === "build" && (
+        <div className="flex flex-col items-center mb-4">
+          <div className="flex flex-col gap-5 w-[80%]">
+            <MapPicker
+              countriesList={countriesNames}
+              setSelectedCountry={setSelectedCountry}
+            />
+            <input type="range" min={5} max={15} onChange={handleGridResize} />
+            <input
+              type="range"
+              min={-squareSize}
+              max={squareSize}
+              onChange={handleGridHorizontalShift}
+            />
+          </div>
         </div>
-      </div>
+      )}
       <div>
         <div ref={mapRef} />
       </div>
-      <div className="h-[70vh] w-20 flex justify-center items-center">
-        <div className="rotate-90">
-          <input
-            type="range"
-            min={-squareSize}
-            max={squareSize}
-            onChange={handleGridVerticalShift}
-            className="w-[70vh]"
-          />
+      {mode === "build" && (
+        <div className="h-[70vh] w-20 flex justify-center items-center">
+          <div className="rotate-90">
+            <input
+              type="range"
+              min={-squareSize}
+              max={squareSize}
+              onChange={handleGridVerticalShift}
+              className="w-[70vh]"
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

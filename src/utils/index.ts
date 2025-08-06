@@ -68,7 +68,7 @@ export const throttlify = (callback: (event: Event) => void) => {
 
 export const calculatePolygonArea = (polygon: [number, number][][]): number => {
   let area = 0;
-  const points = polygon[0]; // Assuming the first array contains the points of the polygon
+  const points = polygon[0];
 
   for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
     const p1 = points[i];
