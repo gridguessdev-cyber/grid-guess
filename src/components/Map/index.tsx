@@ -14,8 +14,10 @@ import {
 } from "polygon-intersection";
 import MapPicker from "../MapPicker";
 import { debounce } from "lodash";
+import { useMutation } from "@tanstack/react-query";
+import { createLevel } from "@/lib/levels";
+import { useMapStore } from "@/providers/MapStoreProvider";
 
-const defaultSquareSize = 10;
 const additionalSquaresAmount = 10;
 
 type RectSelection = d3.Selection<SVGRectElement, unknown, null, undefined>;
@@ -44,15 +46,28 @@ export default function Map({
   countriesToDisplay,
   countriesForCalculations,
 }: Props) {
+  const { mutateAsync: createLevelMutation } = useMutation({
+    mutationFn: createLevel,
+    onSuccess() {
+      alert("level created");
+    },
+  });
+
+  const { map } = useMapStore((state) => state);
+
   const mapRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<SVGSelection>(null);
 
   const firstRender = useRef(true);
 
-  const edgeCoordinates = useMemo(
+  const { edgeCoordinates, viewBoxSize } = useMemo(
     () => getEdgePointsCoordinates(countriesToDisplay),
     []
   );
+
+  const longerSide = Math.max(viewBoxSize[0], viewBoxSize[1]);
+
+  const defaultSquareSize = longerSide / 10;
 
   const countriesNames = useMemo(
     () => countriesForCalculations.map((country) => country.name).sort(),
@@ -81,11 +96,6 @@ export default function Map({
         });
       });
     });
-
-    const viewBoxSize = [
-      edgeCoordinates.largestX - edgeCoordinates.smallestX,
-      edgeCoordinates.largestY - edgeCoordinates.smallestY,
-    ];
 
     const svg = d3
       .select(mapRef.current)
@@ -235,7 +245,7 @@ export default function Map({
   };
 
   const handleGridResize = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newSize = parseInt(event.target.value, 10);
+    const newSize = +event.target.value;
     if (gridRef.current) {
       setSquareSize(newSize);
       findSquareWithMostCountryArea();
@@ -248,7 +258,8 @@ export default function Map({
   const handleGridHorizontalShift = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const newShift = parseInt(event.target.value);
+    console.log("grid horizontal shift");
+    const newShift = +event.target.value;
     if (gridRef.current) {
       horizontalShift.current = newShift;
       findSquareWithMostCountryArea();
@@ -263,7 +274,7 @@ export default function Map({
   const handleGridVerticalShift = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const newShift = parseInt(event.target.value);
+    const newShift = +event.target.value;
     if (gridRef.current) {
       verticalShift.current = newShift;
       findSquareWithMostCountryArea();
@@ -426,6 +437,11 @@ export default function Map({
     firstRender.current = false;
   }, [selectedCountry, squareSize]);
 
+  const min = Math.ceil(defaultSquareSize - 0.03 * longerSide);
+  const max = Math.ceil(defaultSquareSize + 0.03 * longerSide);
+
+  const shiftGridBoundaries = Math.round(squareSize * 10) / 10;
+
   return (
     <div>
       {mode === "build" && (
@@ -435,11 +451,18 @@ export default function Map({
               countriesList={countriesNames}
               setSelectedCountry={setSelectedCountry}
             />
-            <input type="range" min={5} max={15} onChange={handleGridResize} />
             <input
               type="range"
-              min={-squareSize}
-              max={squareSize}
+              min={min}
+              max={max}
+              step={0.1}
+              onChange={handleGridResize}
+            />
+            <input
+              type="range"
+              min={-shiftGridBoundaries}
+              max={shiftGridBoundaries}
+              step={0.1}
               onChange={handleGridHorizontalShift}
             />
           </div>
@@ -453,12 +476,31 @@ export default function Map({
           <div className="rotate-90">
             <input
               type="range"
-              min={-squareSize}
-              max={squareSize}
+              min={-shiftGridBoundaries}
+              max={shiftGridBoundaries}
+              step={0.1}
               onChange={handleGridVerticalShift}
               className="w-[70vh]"
             />
           </div>
+        </div>
+      )}
+      {mode === "build" && (
+        <div className="mx-[10%] my-3 flex justify-end">
+          <button
+            className="cursor-pointer"
+            onClick={() =>
+              createLevelMutation({
+                map,
+                country: selectedCountry,
+                squareSize,
+                horizontalShift: horizontalShift.current,
+                verticalShift: verticalShift.current,
+              })
+            }
+          >
+            Create Level
+          </button>
         </div>
       )}
     </div>

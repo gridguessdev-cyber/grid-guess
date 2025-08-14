@@ -14,7 +14,7 @@ export const buildMapCountries = (
     };
   });
 
-  const edgeCoordinates = getEdgePointsCoordinates(
+  const { edgeCoordinates } = getEdgePointsCoordinates(
     countries.map((country) => ({
       name: country.name,
       id: country.id,
@@ -166,5 +166,10 @@ export const getEdgePointsCoordinates = (map: MapCountry[]) => {
     });
   });
 
-  return result;
+  const viewBoxSize = [
+    result.largestX - result.smallestX,
+    result.largestY - result.smallestY,
+  ];
+
+  return { edgeCoordinates: result, viewBoxSize };
 };
