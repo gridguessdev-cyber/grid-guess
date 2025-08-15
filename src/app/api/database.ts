@@ -39,3 +39,16 @@ export const apiPost = async (query: string, values: string[]) => {
     });
   });
 };
+
+export const apiDelete = async (query: string) => {
+  return await new Promise((resolve, reject) => {
+    db.run(query, (error: Error) => {
+      if (error) {
+        console.log("apiDelete error", error);
+        reject(error);
+      }
+
+      return resolve("deleted");
+    });
+  });
+};

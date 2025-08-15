@@ -1,8 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Alfa+Slab+One&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Mozilla+Headline:wght@200..700&display=swap");
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #e8e8e8;
   --foreground: #171717;
 }
 
@@ -23,7 +24,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Mozilla Headline", sans-serif;
 }
 
 .svg-container {

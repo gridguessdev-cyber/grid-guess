@@ -1,4 +1,4 @@
-import { apiGet } from "../../database";
+import { apiDelete, apiGet } from "../../database";
 
 export async function GET(
   req: Request,
@@ -25,6 +25,34 @@ export async function GET(
     });
   } catch (error: any) {
     console.error(error.message);
+    return Response.json(
+      { error: error },
+      {
+        status: 400,
+      }
+    );
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const query = `
+    DELETE FROM levels WHERE id=${id}
+  `;
+
+  try {
+    const deleteResult = await apiDelete(query);
+    console.log("deleteResult", deleteResult);
+    return Response.json(
+      { id },
+      {
+        status: 200,
+      }
+    );
+  } catch (error) {
     return Response.json(
       { error: error },
       {

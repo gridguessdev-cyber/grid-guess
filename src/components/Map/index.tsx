@@ -17,6 +17,8 @@ import { debounce } from "lodash";
 import { useMutation } from "@tanstack/react-query";
 import { createLevel } from "@/lib/levels";
 import { useMapStore } from "@/providers/MapStoreProvider";
+import { Level } from "@/types/api";
+import { motion } from "motion/react";
 
 const additionalSquaresAmount = 10;
 
@@ -39,12 +41,14 @@ interface Props {
   mode: "guess" | "build";
   countriesToDisplay: MapCountry[];
   countriesForCalculations: MapCountry[];
+  level?: Level;
 }
 
 export default function Map({
   mode,
   countriesToDisplay,
   countriesForCalculations,
+  level,
 }: Props) {
   const { mutateAsync: createLevelMutation } = useMutation({
     mutationFn: createLevel,
@@ -74,12 +78,17 @@ export default function Map({
     [countriesForCalculations]
   );
 
-  const [selectedCountry, setSelectedCountry] = useState(countriesNames[0]);
+  const [selectedCountry, setSelectedCountry] = useState(
+    level?.country || countriesNames[0]
+  );
 
-  const [squareSize, setSquareSize] = useState(defaultSquareSize);
-  const horizontalShift = useRef(0);
-  const verticalShift = useRef(0);
+  const [squareSize, setSquareSize] = useState(
+    level?.squareSize || defaultSquareSize
+  );
+  const horizontalShift = useRef(level?.horizontalShift || 0);
+  const verticalShift = useRef(level?.verticalShift || 0);
   const solutionSquare = useRef<Point>([NaN, NaN]);
+  const solutionSquareArea = useRef(0);
 
   const drawMap = () => {
     if (!mapRef.current) return;
@@ -207,16 +216,18 @@ export default function Map({
         (y - verticalShift + squareSize * additionalSquaresAmount) / squareSize
       );
 
-      const solutionSquareGridX =
+      const solutionSquareGridX = Math.round(
         (solutionSquare.current?.[0] -
           horizontalShift +
           squareSize * additionalSquaresAmount) /
-        squareSize;
-      const solutionSquareGridY =
+          squareSize
+      );
+      const solutionSquareGridY = Math.round(
         (solutionSquare.current?.[1] -
           verticalShift +
           squareSize * additionalSquaresAmount) /
-        squareSize;
+          squareSize
+      );
 
       rectangles.forEach((row, rowIndex) => {
         row.forEach((rect, colIndex) => {
@@ -244,10 +255,14 @@ export default function Map({
     }
   };
 
+  const debouncedSetSquareSize = debounce((size) => {
+    setSquareSize(size);
+  }, 50);
+
   const handleGridResize = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSize = +event.target.value;
     if (gridRef.current) {
-      setSquareSize(newSize);
+      debouncedSetSquareSize(newSize);
       findSquareWithMostCountryArea();
       horizontalShift.current = 0;
       verticalShift.current = 0;
@@ -258,7 +273,6 @@ export default function Map({
   const handleGridHorizontalShift = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    console.log("grid horizontal shift");
     const newShift = +event.target.value;
     if (gridRef.current) {
       horizontalShift.current = newShift;
@@ -314,7 +328,10 @@ export default function Map({
 
     intersections = intersections.filter((segment) => segment[0]);
 
-    if (!intersections[0]) return;
+    if (!intersections[0] && mode === "guess") {
+      alert("you lost");
+      return;
+    }
 
     const total = intersections.reduce((acc, segment) => {
       if (segment.length === 1) {
@@ -327,7 +344,13 @@ export default function Map({
       }, 0);
     }, 0);
 
-    console.log("area", total);
+    if (mode === "guess") {
+      if (total.toFixed(3) === solutionSquareArea.current.toFixed(3)) {
+        alert("you won");
+      } else {
+        alert("you lost");
+      }
+    }
   };
 
   const findSquareWithMostCountryArea = debounce(async () => {
@@ -406,6 +429,8 @@ export default function Map({
     });
 
     solutionSquare.current = squareWithMostCountryArea[0];
+    solutionSquareArea.current = biggestArea;
+
     drawGrid({
       squareSize,
       horizontalShift: horizontalShift.current,
@@ -417,9 +442,19 @@ export default function Map({
 
   useEffect(() => {
     drawMap();
-    drawGrid({
-      squareSize: defaultSquareSize,
-    });
+    if (level) {
+      drawGrid({
+        squareSize: level.squareSize,
+        horizontalShift: level.horizontalShift,
+        verticalShift: level.verticalShift,
+      });
+
+      findSquareWithMostCountryArea();
+    } else {
+      drawGrid({
+        squareSize: defaultSquareSize,
+      });
+    }
     return () => {
       gridRef.current?.on("click", null).on("mousemove", null);
     };
@@ -443,20 +478,43 @@ export default function Map({
   const shiftGridBoundaries = Math.round(squareSize * 10) / 10;
 
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
       {mode === "build" && (
         <div className="flex flex-col items-center mb-4">
           <div className="flex flex-col gap-5 w-[80%]">
-            <MapPicker
-              countriesList={countriesNames}
-              setSelectedCountry={setSelectedCountry}
-            />
+            <div className="flex justify-between">
+              <MapPicker
+                countriesList={countriesNames}
+                setSelectedCountry={setSelectedCountry}
+              />
+              <div className="flex justify-end">
+                <button
+                  className="cursor-pointer bg-white py-3 px-6 rounded-xl"
+                  onClick={() =>
+                    createLevelMutation({
+                      map,
+                      country: selectedCountry,
+                      squareSize,
+                      horizontalShift: horizontalShift.current,
+                      verticalShift: verticalShift.current,
+                    })
+                  }
+                >
+                  Create Level
+                </button>
+              </div>
+            </div>
             <input
               type="range"
               min={min}
               max={max}
               step={0.1}
               onChange={handleGridResize}
+              className="accent-[#5d5050]"
             />
             <input
               type="range"
@@ -464,11 +522,12 @@ export default function Map({
               max={shiftGridBoundaries}
               step={0.1}
               onChange={handleGridHorizontalShift}
+              className="accent-[#5d5050]"
             />
           </div>
         </div>
       )}
-      <div>
+      <div className="bg-amber-600">
         <div ref={mapRef} />
       </div>
       {mode === "build" && (
@@ -480,29 +539,11 @@ export default function Map({
               max={shiftGridBoundaries}
               step={0.1}
               onChange={handleGridVerticalShift}
-              className="w-[70vh]"
+              className="w-[70vh] accent-[#5d5050]"
             />
           </div>
         </div>
       )}
-      {mode === "build" && (
-        <div className="mx-[10%] my-3 flex justify-end">
-          <button
-            className="cursor-pointer"
-            onClick={() =>
-              createLevelMutation({
-                map,
-                country: selectedCountry,
-                squareSize,
-                horizontalShift: horizontalShift.current,
-                verticalShift: verticalShift.current,
-              })
-            }
-          >
-            Create Level
-          </button>
-        </div>
-      )}
-    </div>
+    </motion.div>
   );
 }

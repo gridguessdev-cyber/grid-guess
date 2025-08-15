@@ -14,7 +14,7 @@ export default async function Level({ params }: Props) {
 
   return (
     <div>
-      <p className="mx-[10%]">
+      <p className="text-center my-8">
         Your goal is to find a square containing the most area of{" "}
         <b>{_.capitalize(level.country)}</b>
       </p>
@@ -22,6 +22,7 @@ export default async function Level({ params }: Props) {
         mode="guess"
         countriesToDisplay={maps[_.camelCase(level.map)].display}
         countriesForCalculations={maps[_.camelCase(level.map)].calculations}
+        level={level}
       />
     </div>
   );

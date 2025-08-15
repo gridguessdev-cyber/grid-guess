@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ReactQueryProvider from "./providers";
 import { MapStoreProvider } from "@/providers/MapStoreProvider";
+import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,9 +31,23 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <MapStoreProvider>
-          <p className="alfa-slab-one-regular text-center my-5 text-3xl">
-            Countries Grid
-          </p>
+          <div className="mb-5 mx-[10%]">
+            <div className="flex items-center justify-between">
+              <div className="flex-1" />
+              <p className="alfa-slab-one-regular text-center my-5 text-3xl flex-1">
+                Countries Grid
+              </p>
+              <div className="flex flex-1 justify-end gap-3">
+                <Link href="/levels" className="hover:underline" prefetch>
+                  Explore levels
+                </Link>
+                <Link href="/builder" className="hover:underline" prefetch>
+                  Build your level
+                </Link>
+              </div>
+            </div>
+            <hr />
+          </div>
           <ReactQueryProvider>{children}</ReactQueryProvider>
         </MapStoreProvider>
       </body>

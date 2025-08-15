@@ -26,12 +26,7 @@ export default function MapPicker({
   };
 
   return (
-    <div className="w-full flex justify-between py-3">
-      <select name="countries" onChange={handleSelect}>
-        {countriesList.map((country) => (
-          <option key={country}>{country}</option>
-        ))}
-      </select>
+    <div className="flex py-3 gap-15">
       <select
         name="maps"
         onChange={handleMapSelect}
@@ -39,6 +34,11 @@ export default function MapPicker({
       >
         {mapsList.map((item) => (
           <option key={item}>{item}</option>
+        ))}
+      </select>
+      <select name="countries" onChange={handleSelect}>
+        {countriesList.map((country) => (
+          <option key={country}>{country}</option>
         ))}
       </select>
     </div>
