@@ -13,6 +13,7 @@ export default function Builder() {
       mode="build"
       countriesToDisplay={maps[map].display}
       countriesForCalculations={maps[map].calculations}
+      displayIndividualCountries={maps[map].displayIndividualCountries}
     />
   );
 }

@@ -1,50 +1,66 @@
 import { buildMapCountries } from "@/utils";
 import { africaLow } from "./africa/africa-low";
-import { africaMedium } from "./africa/africa-medium";
 
 import { asiaLow } from "./asia/asia-low";
-import { asiaMedium } from "./asia/asia-medium";
-
 import { europeLow } from "./europe/europe-low";
-import { europeMedium } from "./europe/europe-medium";
-
 import { northAmericaLow } from "./northAmerica/north-america-low";
-import { northAmericaMedium } from "./northAmerica/north-america-medium";
-
 import { southAmericaLow } from "./southAmerica/south-america-low";
-import { southAmericaMedium } from "./southAmerica/south-america-medium";
-
 import { worldLow } from "./world/world-low";
-import { worldMedium } from "./world/world-medium";
+
+import { africaCoastline } from "./africa/africa-coastline";
+import { asiaCoastline } from "./asia/asia-coastline";
+import { europeCoastline } from "./europe/europe-coastline";
+import { northAmericaCoastline } from "./northAmerica/north-america-coastline";
+import { southAmericaCoastline } from "./southAmerica/south-america-coastline";
+import { worldCoastline } from "./world/world-coastline";
 
 import { MapCountry } from "@/types/maps";
+import { africaMedium } from "./africa/africa-medium";
+import { asiaMedium } from "./asia/asia-medium";
+import { europeMedium } from "./europe/europe-medium";
+import { northAmericaMedium } from "./northAmerica/north-america-medium";
+import { southAmericaMedium } from "./southAmerica/south-america-medium";
+import { worldMedium } from "./world/world-medium";
 
 export const maps: Record<
   string,
-  { display: MapCountry[]; calculations: MapCountry[] }
+  {
+    display: MapCountry[];
+    calculations: MapCountry[];
+    displayIndividualCountries: MapCountry[];
+  }
 > = {
   africa: {
-    display: buildMapCountries(africaMedium),
+    display: africaCoastline,
     calculations: buildMapCountries(africaLow),
+    displayIndividualCountries: buildMapCountries(africaMedium),
   },
   asia: {
-    display: buildMapCountries(asiaMedium),
+    display: asiaCoastline,
     calculations: buildMapCountries(asiaLow),
+    displayIndividualCountries: buildMapCountries(asiaMedium),
   },
   europe: {
-    display: buildMapCountries(europeMedium),
+    display: europeCoastline,
     calculations: buildMapCountries(europeLow),
+    displayIndividualCountries: buildMapCountries(europeMedium),
   },
   northAmerica: {
-    display: buildMapCountries(northAmericaMedium),
+    // display: northAmericaCoastline,
+    // calculations: buildMapCountries(northAmericaLow),
+    // displayIndividualCountries: buildMapCountries(northAmericaMedium),
+    display: buildMapCountries(northAmericaLow),
     calculations: buildMapCountries(northAmericaLow),
+    displayIndividualCountries: buildMapCountries(northAmericaLow),
   },
   southAmerica: {
-    display: buildMapCountries(southAmericaMedium),
+    display: southAmericaCoastline,
     calculations: buildMapCountries(southAmericaLow),
+    displayIndividualCountries: buildMapCountries(southAmericaMedium),
   },
   world: {
-    display: buildMapCountries(worldMedium),
+    display: worldCoastline,
     calculations: buildMapCountries(worldLow),
+    displayIndividualCountries: buildMapCountries(worldMedium),
   },
 };

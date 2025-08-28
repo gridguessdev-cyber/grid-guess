@@ -41,6 +41,7 @@ interface Props {
   mode: "guess" | "build";
   countriesToDisplay: MapCountry[];
   countriesForCalculations: MapCountry[];
+  displayIndividualCountries: MapCountry[];
   level?: Level;
 }
 
@@ -48,6 +49,7 @@ export default function Map({
   mode,
   countriesToDisplay,
   countriesForCalculations,
+  displayIndividualCountries,
   level,
 }: Props) {
   const { mutateAsync: createLevelMutation } = useMutation({
@@ -81,6 +83,7 @@ export default function Map({
   const [selectedCountry, setSelectedCountry] = useState(
     level?.country || countriesNames[0]
   );
+  const selectedCountrySVGRef = useRef<SVGSelection>(null);
 
   const [squareSize, setSquareSize] = useState(
     level?.squareSize || defaultSquareSize
@@ -136,6 +139,50 @@ export default function Map({
         }
       }
     }
+    if (mode === "build") {
+      drawTargetCountry();
+    }
+  };
+
+  const drawTargetCountry = () => {
+    selectedCountrySVGRef.current?.remove();
+    const targetCountry = displayIndividualCountries.find(
+      (c) => c.name === selectedCountry
+    );
+
+    if (!targetCountry) return;
+
+    console.log("drawing target country...");
+
+    const selectedCountrySVG = d3
+      .select(mapRef.current)
+      .append("svg")
+      .classed("svg-content-responsive", true)
+      .attr("width", "100%")
+      .attr("height", "70vh")
+      .attr("viewBox", `0 0 ${viewBoxSize[0]} ${viewBoxSize[1]}`);
+    selectedCountrySVGRef.current = selectedCountrySVG;
+
+    for (let i = 0; i < targetCountry.coordinates.length; i++) {
+      for (let j = 0; j < targetCountry.coordinates[i].length; j++) {
+        const polygon = targetCountry.coordinates[i][j];
+        const lineFunc = d3
+          .line()
+          .x(function (d) {
+            return d[0];
+          })
+          .y(function (d) {
+            return d[1];
+          });
+
+        selectedCountrySVG
+          .append("path")
+          .attr("d", lineFunc(polygon.map((point) => [point[0], point[1]])))
+          .attr("stroke", "red")
+          .attr("stroke-width", 0.2)
+          .attr("fill", "none");
+      }
+    }
   };
 
   const drawGrid = ({
@@ -184,7 +231,8 @@ export default function Map({
           .attr(
             "fill",
             x === solutionSquare.current?.[0] &&
-              y === solutionSquare.current?.[1]
+              y === solutionSquare.current?.[1] &&
+              mode === "build"
               ? "#62a674"
               : "none"
           )
@@ -235,7 +283,8 @@ export default function Map({
             rect.attr("fill", "#00080050");
           } else if (
             rowIndex === solutionSquareGridX &&
-            colIndex === solutionSquareGridY
+            colIndex === solutionSquareGridY &&
+            mode === "build"
           ) {
             rect.attr("fill", "#62a674");
           } else {
@@ -343,6 +392,8 @@ export default function Map({
         return (acc += calculatePolygonArea([segment]));
       }, 0);
     }, 0);
+
+    console.log("area", total);
 
     if (mode === "guess") {
       if (total.toFixed(3) === solutionSquareArea.current.toFixed(3)) {
@@ -463,6 +514,11 @@ export default function Map({
   useEffect(() => {
     if (!firstRender.current) {
       findSquareWithMostCountryArea();
+
+      if (mode === "build") {
+        drawTargetCountry();
+      }
+
       drawGrid({
         squareSize,
         horizontalShift: horizontalShift.current,
