@@ -1,11 +1,11 @@
 "use client";
 import Map from "@/components/Map";
 
-import { useMapStore } from "@/providers/MapStoreProvider";
 import { maps } from "@/data/exports";
+import { useStore } from "@/store/store";
 
 export default function Builder() {
-  const { map } = useMapStore((state) => state);
+  const { map } = useStore((state) => state);
 
   return (
     <Map

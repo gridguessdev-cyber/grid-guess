@@ -6,11 +6,14 @@ import Link from "next/link";
 import _ from "lodash";
 import Image from "next/image";
 import { motion } from "motion/react";
+import { createClient } from "@/utils/supabase/client";
 
 export default function LevelsList() {
+  const supabaseClient = createClient();
+
   const { data: levels } = useQuery({
     queryKey: ["levels"],
-    queryFn: getLevels,
+    queryFn: () => getLevels(supabaseClient),
   });
 
   if (!levels) return;

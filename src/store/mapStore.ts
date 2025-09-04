@@ -1,22 +1,13 @@
-import { createStore } from "zustand/vanilla";
+import { StateCreator } from "zustand";
 
 export type MapState = {
   map: string;
-};
-
-export type MapActions = {
   setMap: (map: string) => void;
 };
 
-export type MapStore = MapState & MapActions;
-
-export const initialState: MapState = {
+export const createMapSlice: StateCreator<MapState, [], [], MapState> = (
+  set
+) => ({
   map: "world",
-};
-
-export const createMapStore = (initState: MapState = initialState) => {
-  return createStore<MapStore>()((set) => ({
-    ...initState,
-    setMap: (map) => set(() => ({ map })),
-  }));
-};
+  setMap: (map) => set({ map }),
+});

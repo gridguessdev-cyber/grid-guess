@@ -2,7 +2,7 @@
 import { maps } from "@/data/exports";
 import { ChangeEvent, Dispatch, SetStateAction } from "react";
 import _ from "lodash";
-import { useMapStore } from "@/providers/MapStoreProvider";
+import { useStore } from "@/store/store";
 
 interface Props {
   countriesList: string[];
@@ -13,7 +13,7 @@ export default function MapPicker({
   countriesList,
   setSelectedCountry,
 }: Props) {
-  const { map, setMap } = useMapStore((state) => state);
+  const { map, setMap } = useStore((state) => state);
 
   const mapsList = Object.keys(maps).map(_.startCase);
   const handleSelect = (event: ChangeEvent<HTMLSelectElement>) => {
