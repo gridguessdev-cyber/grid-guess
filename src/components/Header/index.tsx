@@ -7,7 +7,6 @@ import { useStore } from "@/store/store";
 
 export default function Header() {
   const { user } = useStore((state) => state);
-  console.log("user", user);
 
   return (
     <div className="mb-5 mx-[10%]">

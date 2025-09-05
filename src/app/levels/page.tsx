@@ -1,18 +1,18 @@
-import { getLevels } from "@/lib/levels";
 import { getQueryClient } from "../get-query-client";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import LevelsList from "@/components/LevelsList";
 import { createClient } from "@/utils/supabase/server";
-import { Database } from "../../../database.types";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { LevelsService } from "@/lib/LevelsService";
 
 export default async function Levels() {
+  const supabase = await createClient();
+  const levelsService = new LevelsService(supabase);
+
   const queryClient = getQueryClient();
-  const supabaseClient: SupabaseClient<Database> = createClient();
 
   await queryClient.prefetchQuery({
     queryKey: ["levels"],
-    queryFn: () => getLevels(supabaseClient),
+    queryFn: () => levelsService.getLevels(),
   });
 
   return (

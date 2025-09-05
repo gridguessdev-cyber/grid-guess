@@ -4,6 +4,7 @@ import "./globals.css";
 import ReactQueryProvider from "./providers";
 import { HeroUIProvider } from "@heroui/system";
 import Header from "@/components/Header";
+import { ServicesProvider } from "@/providers/ServicesProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,10 +32,12 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <HeroUIProvider>
-          <ReactQueryProvider>
-            <Header />
-            {children}
-          </ReactQueryProvider>
+          <ServicesProvider>
+            <ReactQueryProvider>
+              <Header />
+              {children}
+            </ReactQueryProvider>
+          </ServicesProvider>
         </HeroUIProvider>
       </body>
     </html>

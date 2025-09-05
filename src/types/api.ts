@@ -5,6 +5,7 @@ export type Level = {
   squareSize: number;
   horizontalShift: number;
   verticalShift: number;
+  author: string;
 };
 
 export type CreateLevelParams = Omit<Level, "id">;

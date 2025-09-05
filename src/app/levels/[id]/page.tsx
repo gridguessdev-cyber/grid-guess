@@ -1,6 +1,7 @@
 import Map from "@/components/Map";
 import { maps } from "@/data/exports";
-import { getLevelById } from "@/lib/levels";
+import { LevelsService } from "@/lib/LevelsService";
+import { createClient } from "@/utils/supabase/server";
 import _ from "lodash";
 
 interface Props {
@@ -9,8 +10,10 @@ interface Props {
 
 export default async function Level({ params }: Props) {
   const { id } = await params;
+  const supabase = await createClient();
+  const levelsService = new LevelsService(supabase);
 
-  const level = await getLevelById(id);
+  const level = await levelsService.getLevelById(id);
 
   return (
     <div>

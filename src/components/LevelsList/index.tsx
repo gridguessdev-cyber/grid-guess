@@ -1,19 +1,18 @@
 "use client";
 
-import { getLevels } from "@/lib/levels";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import _ from "lodash";
 import Image from "next/image";
 import { motion } from "motion/react";
-import { createClient } from "@/utils/supabase/client";
+import { useServices } from "@/providers/ServicesProvider";
 
 export default function LevelsList() {
-  const supabaseClient = createClient();
+  const { levelsService } = useServices();
 
   const { data: levels } = useQuery({
     queryKey: ["levels"],
-    queryFn: () => getLevels(supabaseClient),
+    queryFn: () => levelsService.getLevels(),
   });
 
   if (!levels) return;

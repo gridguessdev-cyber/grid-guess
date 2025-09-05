@@ -138,6 +138,18 @@ export const getClickedSquareSides = ({
 };
 
 export const getEdgePointsCoordinates = (map: MapCountry[]) => {
+  if (!map) {
+    return {
+      edgeCoordinates: {
+        smallestX: 0,
+        largestX: 0,
+        smallestY: 0,
+        largestY: 0,
+      },
+      viewBoxSize: [0, 0],
+    };
+  }
+
   const firstPoint = map[0].coordinates[0][0][0];
   const result = {
     smallestX: firstPoint[0],

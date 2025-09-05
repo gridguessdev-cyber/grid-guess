@@ -15,10 +15,10 @@ import {
 import MapPicker from "../MapPicker";
 import { debounce } from "lodash";
 import { useMutation } from "@tanstack/react-query";
-import { createLevel } from "@/lib/levels";
 import { Level } from "@/types/api";
 import { motion } from "motion/react";
 import { useStore } from "@/store/store";
+import { useServices } from "@/providers/ServicesProvider";
 
 const additionalSquaresAmount = 10;
 
@@ -52,14 +52,23 @@ export default function Map({
   displayIndividualCountries,
   level,
 }: Props) {
+  const { levelsService } = useServices();
+  const { map, user } = useStore((state) => state);
+
   const { mutateAsync: createLevelMutation } = useMutation({
-    mutationFn: createLevel,
+    mutationFn: () =>
+      levelsService.createLevel({
+        map,
+        country: selectedCountry,
+        squareSize,
+        horizontalShift: horizontalShift.current,
+        verticalShift: verticalShift.current,
+        author: user!.id,
+      }),
     onSuccess() {
       alert("level created");
     },
   });
-
-  const { map } = useStore((state) => state);
 
   const mapRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<SVGSelection>(null);
@@ -550,15 +559,7 @@ export default function Map({
               <div className="flex justify-end">
                 <button
                   className="cursor-pointer bg-white py-3 px-6 rounded-xl"
-                  onClick={() =>
-                    createLevelMutation({
-                      map,
-                      country: selectedCountry,
-                      squareSize,
-                      horizontalShift: horizontalShift.current,
-                      verticalShift: verticalShift.current,
-                    })
-                  }
+                  onClick={() => createLevelMutation()}
                 >
                   Create Level
                 </button>
