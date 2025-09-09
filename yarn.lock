@@ -451,7 +451,7 @@
     "@react-types/textfield" "3.12.5"
     input-otp "1.4.1"
 
-"@heroui/input@2.4.26":
+"@heroui/input@2.4.26", "@heroui/input@^2.4.26":
   version "2.4.26"
   resolved "https://registry.yarnpkg.com/@heroui/input/-/input-2.4.26.tgz#357e3a50647bd6e3b9f8f7d2b0f3dfc307b236e0"
   integrity sha512-mthBVsCjE/zh3/WpPfShRgXThHGL9ilegHwpb8IwoHyH0HuPnndeHZkM7ukas2xacd39lOt91/DVFS7NFkkyqQ==
@@ -524,7 +524,7 @@
     "@react-types/menu" "3.10.4"
     "@react-types/shared" "3.32.0"
 
-"@heroui/modal@2.2.22":
+"@heroui/modal@2.2.22", "@heroui/modal@^2.2.22":
   version "2.2.22"
   resolved "https://registry.yarnpkg.com/@heroui/modal/-/modal-2.2.22.tgz#37ee16800849ce57a6bf3659d253cb4ef0ceeb7e"
   integrity sha512-DV+iGAP78u/7zcL+kd0Qr9uusWuMgxo/hPm5rBlQspkCRrEgIzzgrCrLSBfewDd5wi65I/inuUma91MQlSZhHw==

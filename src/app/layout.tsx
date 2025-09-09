@@ -32,12 +32,12 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <HeroUIProvider>
-          <ServicesProvider>
-            <ReactQueryProvider>
+          <ReactQueryProvider>
+            <ServicesProvider>
               <Header />
               {children}
-            </ReactQueryProvider>
-          </ServicesProvider>
+            </ServicesProvider>
+          </ReactQueryProvider>
         </HeroUIProvider>
       </body>
     </html>

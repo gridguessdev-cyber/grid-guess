@@ -9,3 +9,10 @@ export type Level = {
 };
 
 export type CreateLevelParams = Omit<Level, "id">;
+
+export type UserProfile = {
+  id: string;
+  created_at: string;
+  full_name: string | null;
+  email: string | null;
+};

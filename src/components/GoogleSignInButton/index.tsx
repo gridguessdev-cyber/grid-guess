@@ -1,12 +1,12 @@
 "use client";
 
+import { useServices } from "@/providers/ServicesProvider";
 import { useStore } from "@/store/store";
-import { createClient } from "@/utils/supabase/client";
 import { useEffect, useRef } from "react";
 
 export default function GoogleSignInButton() {
-  const supabase = createClient();
-  const { user, setUser } = useStore();
+  const { usersService } = useServices();
+  const { setUser } = useStore((state) => state);
 
   const buttonRef = useRef<HTMLDivElement>(null);
 
@@ -15,15 +15,12 @@ export default function GoogleSignInButton() {
       window.google.accounts.id.initialize({
         client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
         callback: async (response: { credential: string }) => {
-          const { data, error } = await supabase.auth.signInWithIdToken({
-            provider: "google",
-            token: response.credential,
-          });
-          if (data) {
-            setUser(data.user);
-          }
-          if (error) {
-            alert(error.message);
+          const user = await usersService.authorizeIdToken(response.credential);
+          if (user) {
+            const userProfile = await usersService.getUser(user.id);
+            if (userProfile) {
+              setUser(userProfile);
+            }
           }
         },
       });
@@ -37,15 +34,5 @@ export default function GoogleSignInButton() {
     }
   }, []);
 
-  const logout = () => {
-    supabase.auth.signOut();
-    setUser(null);
-  };
-
-  return (
-    <div>
-      {!user && <div ref={buttonRef}></div>}
-      {user && <button onClick={logout}>Logout</button>}
-    </div>
-  );
+  return <div ref={buttonRef}></div>;
 }

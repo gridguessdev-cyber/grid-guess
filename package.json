@@ -10,6 +10,8 @@
     "migrate": "npx tsx src/app/api/migrations.ts"
   },
   "dependencies": {
+    "@heroui/input": "^2.4.26",
+    "@heroui/modal": "^2.2.22",
     "@heroui/react": "^2.8.3",
     "@heroui/system": "^2.4.21",
     "@heroui/theme": "^2.4.21",

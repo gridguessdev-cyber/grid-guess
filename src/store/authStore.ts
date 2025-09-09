@@ -1,9 +1,9 @@
-import { User } from "@supabase/supabase-js";
+import { UserProfile } from "@/types/api";
 import { StateCreator } from "zustand";
 
 export type AuthState = {
-  user: User | null;
-  setUser: (user: User | null) => void;
+  user: UserProfile | null;
+  setUser: (user: UserProfile | null) => void;
 };
 
 export const createAuthSlice: StateCreator<AuthState, [], [], AuthState> = (

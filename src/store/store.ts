@@ -5,7 +5,15 @@ import { createAuthSlice, AuthState } from "./authStore";
 
 type CombinedStore = MapState & AuthState;
 
-export const useStore = create<CombinedStore>()((...a) => ({
-  ...persist(createMapSlice, { name: "map" })(...a),
-  ...persist(createAuthSlice, { name: "auth" })(...a),
-}));
+export const useStore = create<CombinedStore>()(
+  persist(
+    (...a) => ({
+      ...createMapSlice(...a),
+      ...createAuthSlice(...a),
+    }),
+    {
+      name: "store",
+      partialize: (state) => ({ user: state.user }),
+    }
+  )
+);
