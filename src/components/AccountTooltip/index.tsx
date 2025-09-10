@@ -4,6 +4,7 @@ import GoogleSignInButton from "../GoogleSignInButton";
 import { createClient } from "@/utils/supabase/client";
 import Image from "next/image";
 import { Button } from "@heroui/react";
+import { redirect, RedirectType, usePathname } from "next/navigation";
 
 interface Props {
   onEditModalOpen: () => void;
@@ -12,10 +13,15 @@ interface Props {
 export default function AccountTooltip({ onEditModalOpen }: Props) {
   const supabase = createClient();
   const { user, setUser } = useStore((state) => state);
+  const pathname = usePathname();
 
   const logout = () => {
     supabase.auth.signOut();
     setUser(null);
+
+    if (pathname === "/builder") {
+      redirect("/levels", RedirectType.replace);
+    }
   };
 
   if (!user) {
