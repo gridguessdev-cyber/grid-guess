@@ -10,7 +10,7 @@ import { worldLow } from "./world/world-low";
 import { africaCoastline } from "./africa/africa-coastline";
 import { asiaCoastline } from "./asia/asia-coastline";
 import { europeCoastline } from "./europe/europe-coastline";
-import { northAmericaCoastline } from "./northAmerica/north-america-coastline";
+// import { northAmericaCoastline } from "./northAmerica/north-america-coastline";
 import { southAmericaCoastline } from "./southAmerica/south-america-coastline";
 import { worldCoastline } from "./world/world-coastline";
 
@@ -18,7 +18,7 @@ import { MapCountry } from "@/types/maps";
 import { africaMedium } from "./africa/africa-medium";
 import { asiaMedium } from "./asia/asia-medium";
 import { europeMedium } from "./europe/europe-medium";
-import { northAmericaMedium } from "./northAmerica/north-america-medium";
+// import { northAmericaMedium } from "./northAmerica/north-america-medium";
 import { southAmericaMedium } from "./southAmerica/south-america-medium";
 import { worldMedium } from "./world/world-medium";
 

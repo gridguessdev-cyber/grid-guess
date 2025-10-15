@@ -13,7 +13,7 @@ export default function GoogleSignInButton() {
   useEffect(() => {
     if (window.google && buttonRef.current) {
       window.google.accounts.id.initialize({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
         callback: async (response: { credential: string }) => {
           const user = await usersService.authorizeIdToken(response.credential);
           if (user) {
