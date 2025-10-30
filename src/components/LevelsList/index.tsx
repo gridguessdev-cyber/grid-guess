@@ -8,19 +8,41 @@ import { motion } from "motion/react";
 import { useServices } from "@/providers/ServicesProvider";
 import { maps } from "@/data/exports";
 import { useState } from "react";
+import TrashIcon from "@/assets/icons/delete.svg";
+import { getQueryClient } from "@/app/get-query-client";
 
-export default function LevelsList() {
+interface Props {
+  listingType?: "all" | "my-levels";
+}
+
+export default function LevelsList({ listingType = "all" }: Props) {
   const [selectedFilterCountry, setSelectedFilterCountry] =
     useState<string>("All");
   const { levelsService } = useServices();
 
+  const queryClient = getQueryClient();
+
   const { data: levels, isLoading } = useQuery({
-    queryKey: ["levels", selectedFilterCountry],
-    queryFn: () => levelsService.getLevels({ map: selectedFilterCountry }),
+    queryKey: [
+      listingType === "all" ? "levels" : "my-levels",
+      selectedFilterCountry,
+    ],
+    queryFn: () =>
+      levelsService.getLevels({ map: selectedFilterCountry, listingType }),
   });
 
   const mapsList = Object.keys(maps).map(_.startCase);
   mapsList.unshift("All");
+
+  const handleDeleteLevel = async (levelId: string) => {
+    await levelsService.deleteLevel(levelId);
+    queryClient.invalidateQueries({
+      queryKey: [
+        listingType === "all" ? "levels" : "my-levels",
+        selectedFilterCountry,
+      ],
+    });
+  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -58,14 +80,30 @@ export default function LevelsList() {
               <Link key={level.id} href={`/levels/${level.id}`}>
                 <div className="rounded-xl p-4 flex justify-between items-center bg-white">
                   <div className="alfa-slab-one-regular">{level.country}</div>
-                  <div className="flex gap-2 items-center">
-                    <Image
-                      src={"/icons/world-map.svg"}
-                      alt="map icon"
-                      width={30}
-                      height={30}
-                    />
-                    <div className="font-bold">{_.capitalize(level.map)}</div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex gap-2 items-center">
+                      <Image
+                        src={"/icons/world-map.svg"}
+                        alt="map icon"
+                        width={30}
+                        height={30}
+                      />
+                      <div className="font-bold">{_.startCase(level.map)}</div>
+                    </div>
+                    {listingType === "my-levels" && (
+                      <div
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleDeleteLevel(level.id);
+                        }}
+                      >
+                        <TrashIcon
+                          width={30}
+                          height={30}
+                          className="hover:fill-red-500"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </Link>

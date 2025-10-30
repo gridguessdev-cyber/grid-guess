@@ -5,6 +5,7 @@ import { createClient } from "@/utils/supabase/client";
 import Image from "next/image";
 import { Button } from "@heroui/react";
 import { redirect, RedirectType, usePathname } from "next/navigation";
+import Link from "next/link";
 
 interface Props {
   onEditModalOpen: () => void;
@@ -19,7 +20,7 @@ export default function AccountTooltip({ onEditModalOpen }: Props) {
     supabase.auth.signOut();
     setUser(null);
 
-    if (pathname === "/builder") {
+    if (pathname === "/builder" || pathname === "/my-levels") {
       redirect("/levels", RedirectType.replace);
     }
   };
@@ -41,6 +42,11 @@ export default function AccountTooltip({ onEditModalOpen }: Props) {
           <Image src={"/icons/pencil.svg"} alt="edit" width={18} height={18} />
         </button>
       </div>
+      <Link href="/my-levels">
+        <Button variant="faded" className="w-full mt-2">
+          My levels
+        </Button>
+      </Link>
       <Button onClick={logout} variant="faded" className="w-full mt-2">
         Logout
       </Button>
